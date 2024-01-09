@@ -1,50 +1,55 @@
 var express = require('express');
 var router = express.Router();
 const userModel = require("./users")
-const postModel = require("./posts")
+const postModel = require("./posts");
+const passport = require('passport');
+const localStrategy = require("passport-local")
+
+// is line sai user sign in hota hai
+passport.authenticate(new localStrategy(userModel.authenticate()))
 
 /* GET home page. */
 router.get('/', function (req, res, next) {
   res.render('index', { title: 'Express' });
 });
 
-router.get("/alluserposts",async (req,res,next)=>{
-  /* //ab in lines sai mujhe jo user milega oosmai posts array mai id's hongi
-     // isliye posts dekhne k liye mujhe krna hoga .populate()
-  let user = await userModel.findOne({_id:"659dc0a9ffba30932160a369"});
-  res.send(user);
-  */
+router.get('/', function (req, res, next) {
+  res.render('index', { title: 'Express' });
+});
 
-  let user = await userModel
-  .findOne({_id:"659dc0a9ffba30932160a369"})
-  .populate("posts") //populate k andr btao kis feild ko populate krna hai fir woh id's sai data mai convert hojayega
-  res.send(user);
+router.get('/profile',isLoggedIn, function (req, res, next) {
+  res.send("profile");
+});
+
+router.post("/register", (req,res)=>{
+  const { username, email, fullname } = req.body;
+  const userData = new userModel({ username, email, fullname });
+  
+  userModel.register(userData, req,body.password)
+  .then(()=>{
+    passport.authenticate("local")(req,res,()=>{
+      res.redirect("/profile")
+    })
+  })
 })
 
-router.get('/createuser', async function (req, res, next) {
-  let createduser = await userModel.create({
-    username: "harsh",
-    password: "harsh",
-    posts: [],
-    email: "harsh@male.com",
-    fullName: "Harsh Vandana Sharma",
+router.post("/login", passport.authenticate("local",{
+  successRedirect : "/profile",
+  failureRedirect: "/"
+}), (req,res)=>{
+
+})
+
+router.get("/logout", (req,res)=>{
+  req.logOut((err)=>{
+    if (err) {return next(err);}
+    res.redirect("/");
   });
-  
-  res.send(createduser);
-});
+})
 
-router.get('/createpost', async function (req, res, next) {
-  let createdpost = await postModel.create({
-    postText: "Hello kaise ho saare",
-    user: "659dc0a9ffba30932160a369"
-
-  });
-
-  let user = await userModel.findOne({_id:"659dc0a9ffba30932160a369"});
-  user.posts.push(createdpost._id);
-  await user.save();
-  res.send("done")
-
-});
+function isLoggedIn(req,res,next){
+  if(req.isAuthenticated()) return next();
+  res.redirect("/");
+}
 
 module.exports = router;

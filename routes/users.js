@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-
+const plm = require("passport-local-mongoose")
 mongoose.connect("mongodb+srv://admin:9gbvukBVkyR69QOE@cluster0.g3sqkib.mongodb.net/?retryWrites=true&w=majority")
 
 const userSchema = new mongoose.Schema({
@@ -24,12 +24,12 @@ const userSchema = new mongoose.Schema({
     required: true,
     unique: true,
   },
-  fullName: {
+  fullname: {
     type: String,
     required: true,
   },
 });
 
-
+userSchema.plugin(plm);
 module.exports = mongoose.model('User', userSchema);
 
